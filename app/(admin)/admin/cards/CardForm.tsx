@@ -166,12 +166,12 @@ export default function CardForm({ card, action, title }: CardFormProps) {
       {/* Grade, Status, Price */}
       <div className="grid grid-cols-3 gap-4">
         <Field label="Grade">
-          <Select name="grade" defaultValue={card?.grade ?? ""}>
+          <Select name="grade" defaultValue={card?.grade ?? "none"}>
             <SelectTrigger>
               <SelectValue placeholder="No grade" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Raw / Not graded</SelectItem>
+              <SelectItem value="none">Raw / Not graded</SelectItem>
               {GRADES.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}
             </SelectContent>
           </Select>

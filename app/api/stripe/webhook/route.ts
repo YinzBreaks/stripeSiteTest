@@ -44,8 +44,9 @@ export async function POST(req: NextRequest) {
         break;
       }
       case "payment_intent.payment_failed": {
-        const paymentIntent = event.data.object as Stripe.PaymentIntent;
-        await handlePaymentFailed(paymentIntent, supabase);
+        // Do NOT revert here — the user can retry on the same Stripe Checkout page.
+        // The card will revert via checkout.session.expired (triggered by our cancel
+        // endpoint or Stripe's 30-min expiry) once the session is truly dead.
         break;
       }
       default:
@@ -72,17 +73,6 @@ async function handleCheckoutCompleted(
     return;
   }
 
-  // Idempotency: skip if order already recorded for this session
-  const { data: existing } = await supabase
-    .from("orders")
-    .select("id")
-    .eq("stripe_session_id", session.id)
-    .maybeSingle();
-
-  if (existing) {
-    return; // already processed
-  }
-
   const shipping = session.shipping_details;
   const shippingAddress: ShippingAddress | null =
     shipping?.address
@@ -96,7 +86,7 @@ async function handleCheckoutCompleted(
         }
       : null;
 
-  // Insert order
+  // Insert order — unique constraint on stripe_session_id handles idempotency
   const { error: orderError } = await supabase.from("orders").insert({
     card_id: cardId,
     buyer_email: session.customer_details?.email ?? "",
@@ -112,6 +102,11 @@ async function handleCheckoutCompleted(
   });
 
   if (orderError) {
+    // 23505 = unique_violation — this session was already processed on a prior delivery
+    if ((orderError as { code?: string }).code === "23505") {
+      console.log("[webhook] checkout.session.completed already processed, skipping:", session.id);
+      return;
+    }
     console.error("[webhook] Failed to insert order:", orderError);
     throw orderError;
   }
@@ -133,23 +128,6 @@ async function handleCheckoutExpired(
   supabase: ReturnType<typeof createServiceClient>
 ) {
   const cardId = session.metadata?.card_id;
-  if (!cardId) return;
-
-  // Only revert if still pending (idempotent)
-  await supabase
-    .from("cards")
-    .update({ status: "for_sale" })
-    .eq("id", cardId)
-    .eq("status", "pending");
-}
-
-async function handlePaymentFailed(
-  paymentIntent: Stripe.PaymentIntent,
-  supabase: ReturnType<typeof createServiceClient>
-) {
-  // Find the checkout session to get the card_id via metadata
-  // PaymentIntent metadata carries card_id if the session set it
-  const cardId = paymentIntent.metadata?.card_id;
   if (!cardId) return;
 
   // Only revert if still pending (idempotent)

@@ -107,12 +107,16 @@ export async function POST(req: NextRequest) {
           allowed_countries: ["US", "CA", "GB", "AU"],
         },
         success_url: `${siteUrl}/shop/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${siteUrl}/shop/${card.id}?cancelled=true`,
+        cancel_url: `${siteUrl}/api/stripe/cancel?session_id={CHECKOUT_SESSION_ID}&card_id=${card.id}`,
         metadata: { card_id: card.id },
+        payment_intent_data: {
+          // Propagate card_id so PaymentIntent events also carry it
+          metadata: { card_id: card.id },
+        },
       },
       {
-        // Idempotency key based on card ID prevents duplicate sessions
-        idempotencyKey: `checkout-${card.id}`,
+        // Include timestamp so retried purchases after cancel get a fresh session
+        idempotencyKey: `checkout-${card.id}-${Date.now()}`,
       }
     );
 

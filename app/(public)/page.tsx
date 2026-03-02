@@ -31,7 +31,7 @@ export default async function HomePage() {
     <>
       {/* ── Hero ── */}
       <section className="relative bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 text-white overflow-hidden">
-        <div className="absolute inset-0 opacity-10 bg-[url('/placeholder-card.png')] bg-cover bg-center" />
+        <div className="absolute inset-0 opacity-10 bg-[url('/placeholder-card.svg')] bg-cover bg-center" />
         <div className="relative container mx-auto px-4 py-28 flex flex-col items-center text-center gap-6">
           <span className="bg-white/10 border border-white/20 text-xs font-semibold uppercase tracking-widest px-3 py-1 rounded-full backdrop-blur-sm">
             Premium Sports Cards

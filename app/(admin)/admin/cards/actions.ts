@@ -17,7 +17,7 @@ const GRADES: Grade[] = [
 const STATUSES: CardStatus[] = ["collection", "for_sale", "sold", "pending"];
 
 function parseGrade(value: string): Grade | null {
-  if (!value) return null;
+  if (!value || value === "none") return null;
   return GRADES.includes(value as Grade) ? (value as Grade) : null;
 }
 

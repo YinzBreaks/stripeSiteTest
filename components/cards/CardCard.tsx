@@ -10,7 +10,7 @@ interface CardCardProps {
 }
 
 export default function CardCard({ card, showBuyButton = false }: CardCardProps) {
-  const imageUrl = card.image_front_url ?? "/placeholder-card.png";
+  const imageUrl = card.image_front_url ?? "/placeholder-card.svg";
 
   const statusColors: Record<string, string> = {
     for_sale: "bg-green-100 text-green-800",
